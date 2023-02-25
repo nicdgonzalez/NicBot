@@ -1,0 +1,24 @@
+{
+    "token": "",
+    "default_prefix": "$",
+    "case_insensitive": true,
+    "description": "",
+    "self_bot": false,
+    "owner_id": 0,
+    "owner_ids": [],
+    "strip_after_prefix": true,
+    "mc_server": {
+        "host": "",
+        "port": 0
+    },
+    "database": {
+        "engine": "postgres",
+        "username": "postgres",
+        "password": "secret",
+        "host": "127.0.0.1",
+        "port": 5432,
+        "database": "postgres",
+        "sslmode": "prefer",
+        "timeout": 10.0
+    }
+}
