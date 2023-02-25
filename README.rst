@@ -6,7 +6,7 @@ NicBot - Discord Bot
 Introduction
 -------------
 
-NicBot is a bot that runs on Discord.
+NicBot is a bot that runs on Discord written in Python.
 
 
 Technologies Used
@@ -45,7 +45,7 @@ Getting Started
 
   $ pip install -U discord.py
 
-- Fill out `config.template.json <./nicbot/config/config.template.json>`
+- Fill out `config.template.json <./nicbot/config/config.template.json>`_
   then rename it to *config.json*.
 
 - To run the bot, run `launcher.py <./launcher.py>`_ from the root directory.
@@ -54,7 +54,7 @@ Getting Started
 
   $ python launcher.py
 
-- The bot should now display *Online* on Discord.
+- The bot should now display **Online** on Discord.
 
 Bug/Feature Request
 --------------------
