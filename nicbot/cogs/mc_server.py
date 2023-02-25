@@ -14,6 +14,7 @@ if typing.TYPE_CHECKING:
 
 
 class MinecraftServer(discord.ext.commands.Cog):
+    """Stores commands and listeners related to our Minecraft server."""
 
     def __init__(self, bot: Bot):
         self.bot: Bot = bot
@@ -22,14 +23,20 @@ class MinecraftServer(discord.ext.commands.Cog):
 
     @discord.ext.commands.Cog.listener()
     async def on_ready(self) -> None:
+        """Runs once when the extension gets loaded."""
+
         self.bot.log.info('Loaded Cog: %s' % self.__class__.__name__)
         return None
 
     @discord.ext.commands.command()
     async def status(self, ctx: Context) -> None:
+        """Attempts to ping the Minecraft server to check if it is running.
+        We assume the server is offline if the connection process times out.
+        """
+
         status: bool = False
         server: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.settimeout(5)
+        server.settimeout(5.0)
 
         await ctx.send("Pinging the Minecraft Server...")
         async with ctx.typing():

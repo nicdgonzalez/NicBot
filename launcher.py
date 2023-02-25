@@ -14,4 +14,5 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 
-NicBot().run()
+if __name__ == "__main__":
+    NicBot().run()
