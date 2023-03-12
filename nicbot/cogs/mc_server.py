@@ -34,7 +34,7 @@ class MinecraftServer(discord.ext.commands.Cog):
         We assume the server is offline if the connection process times out.
         """
 
-        status: bool = False
+        status: bool = None
         server: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.settimeout(5.0)
 
@@ -42,10 +42,10 @@ class MinecraftServer(discord.ext.commands.Cog):
         async with ctx.typing():
             try:
                 server.connect((self.config["host"], self.config["port"]))
-            except (TimeoutError,):
-                pass  # The server is offline
+            except (TimeoutError, ConnectionRefusedError):
+                status = False
             else:
-                status |= True
+                status = True
                 server.close()
 
         status: str = "Online" if status else "Offline"

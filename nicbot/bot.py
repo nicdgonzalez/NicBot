@@ -8,16 +8,24 @@ import typing
 
 import discord
 import discord.ext.commands
+import psycopg2
+
+from . import pysql
 
 if typing.TYPE_CHECKING:
     from logging import Logger
     from typing import List
 
     from discord import ActivityType, Message
-    from discord.ext.commands import Bot
+
+    from .pysql import Column, Database, Model
 
 # Relative to `../launcher.py`
 RELATIVE_COGS_DIR_PATH: str = "./nicbot/cogs"
+
+user_id: int = None
+prefix_base: List[str] = None
+prefix_cache: dict = {}
 
 
 class NicBot(discord.ext.commands.Bot):
@@ -40,6 +48,25 @@ class NicBot(discord.ext.commands.Bot):
             intents=discord.Intents.all()
         )
         self.log: Logger = logging.getLogger(__name__)
+
+        dsn: str = pysql.DatabaseURI(**self.config["database"]).uri
+        self.db: Database = pysql.Database(psycopg2.connect, None, dsn=dsn)
+
+        class Prefixes(self.db.Model, name="prefixes"):
+            guild_id: Column = pysql.Column(
+                pysql.Int8,
+                not_null=True,
+                unique=True
+            )
+            prefix: Column = pysql.Column(
+                pysql.Text,
+                not_null=True,
+                default=self.default_prefix
+            )
+
+        Prefixes().create()
+        self.prefixes: Model = Prefixes
+
         return None
 
     def __str__(self) -> str:
@@ -88,21 +115,36 @@ class NicBot(discord.ext.commands.Bot):
         return None
 
     @staticmethod
-    def get_custom_prefix(__bot: Bot, __message: Message, /) -> List[str]:
+    def get_custom_prefix(bot: "NicBot", message: Message, /) -> List[str]:
         """Gets a list of available prefixes the bot will respond to."""
 
-        user_id: int = __bot.user.id
-        base: List[str] = [f"<@!{user_id}>", f"<@{user_id}>"]
-        default_prefix: str = __bot.default_prefix
-        if bool(default_prefix):
-            base.append(default_prefix)
-        else:
-            base += ["?", "!"]
+        global prefix_base, prefix_cache, user_id
 
-        # Retrieve prefix from database and append to `base`
-        # guild_id: int = __message.guild.id
+        if not bool(user_id):
+            user_id = bot.user.id
 
-        return base
+        if not bool(prefix_base):
+            prefix_base = [f"<@!{user_id}>", f"<@{user_id}>"]
+
+
+        guild_id: int = message.guild.id
+        prefix = prefix_cache.get(guild_id, None)
+
+        if bool(prefix):
+            return prefix_base + list(prefix)
+
+        Prefixes: Model = bot.prefixes
+        entry = Prefixes(guild_id=guild_id)
+
+        prefix = bot.db.query.fetch_one(entry, select=["prefix"])[0]
+
+        if not bool(prefix):
+            bot.db.session.insert(entry)
+            prefix = bot.default_prefix
+
+        prefix_cache[guild_id] = prefix
+
+        return prefix_base + list(prefix)
 
     def run(self) -> None:
         """Starts the bot. This function is blocking and will not return until
