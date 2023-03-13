@@ -20,7 +20,7 @@ required_exp = lambda level: math.floor((level ** 3) + 12)
 gained_exp = lambda level: math.ceil((((32 * level) * 1.25) / 7) + 1)
 
 
-class Template(discord.ext.commands.Cog):
+class RankSystem(discord.ext.commands.Cog):
 
     def __init__(self, bot: Bot):
         self.bot: Bot = bot
@@ -48,29 +48,16 @@ class Template(discord.ext.commands.Cog):
                 "epoch": result[4]
             }
         else:
-            result = self.create_new_user(guild_id, user_id)
+            result = {
+                "guild_id": guild_id,
+                "user_id": user_id,
+                "level": 1,
+                "experience": 0,
+                "epoch": time.time()
+            }
+            self.db.session.insert(models.RankSystem(**result))
 
         return result
-
-    def create_new_user(
-        self,
-        guild_id: int,
-        user_id: int,
-        level: int = 1,
-        experience: int = 0,
-        epoch: int = time.time()
-    ) -> dict:
-        params: dict = {
-            "guild_id": guild_id,
-            "user_id": user_id,
-            "level": level,
-            "experience": experience,
-            "epoch": epoch
-        }
-
-        self.db.session.insert(models.RankSystem(**params))
-
-        return params
 
     @discord.ext.commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
@@ -79,7 +66,6 @@ class Template(discord.ext.commands.Cog):
 
         guild_id, user_id = (message.guild.id, message.author.id)
         player_data: dict = self.get_user_data(guild_id, user_id)
-
         level: int = player_data["level"]
         experience: int = player_data["experience"]
         epoch: int = player_data["epoch"]
