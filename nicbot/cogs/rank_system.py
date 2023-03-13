@@ -18,6 +18,7 @@ if typing.TYPE_CHECKING:
 
 required_exp = lambda level: math.floor((level ** 3) + 12)
 gained_exp = lambda level: math.ceil((((32 * level) * 1.25) / 7) + 1)
+is_valid_level = lambda exp, level: (exp >= required_exp(level)) and (level <= 100)
 
 
 class RankSystem(discord.ext.commands.Cog):
@@ -34,7 +35,7 @@ class RankSystem(discord.ext.commands.Cog):
         self.bot.log.info('Loaded Cog: %s' % self.__class__.__name__)
         return None
 
-    def get_user_data(self, guild_id: int, user_id: int) -> dict:
+    def _get_user_data(self, guild_id: int, user_id: int) -> dict:
         result: tuple | None = self.db.query.fetch_one(
             models.RankSystem(guild_id=guild_id, user_id=user_id)
         )
@@ -65,7 +66,7 @@ class RankSystem(discord.ext.commands.Cog):
             return
 
         guild_id, user_id = (message.guild.id, message.author.id)
-        player_data: dict = self.get_user_data(guild_id, user_id)
+        player_data: dict = self._get_user_data(guild_id, user_id)
         level: int = player_data["level"]
         experience: int = player_data["experience"]
         epoch: int = player_data["epoch"]
@@ -76,7 +77,7 @@ class RankSystem(discord.ext.commands.Cog):
         experience += gained_exp(level)
 
         has_leveled_up: bool = False
-        while experience >= required_exp(level):
+        while is_valid_level(experience, level):
             has_leveled_up |= True
             level += 1
 
@@ -99,12 +100,12 @@ class RankSystem(discord.ext.commands.Cog):
             return None
 
         guild_id, user_id = (ctx.guild.id, user.id)
-        player_data: dict = self.get_user_data(guild_id, user_id)
+        player_data: dict = self._get_user_data(guild_id, user_id)
 
         level: int = player_data.get("level")
         experience: int = player_data.get("experience") + amount
 
-        while experience >= required_exp(level):
+        while is_valid_level(experience, level):
             level += 1
 
         self.db.session.update(
@@ -123,10 +124,11 @@ class RankSystem(discord.ext.commands.Cog):
     
     @discord.ext.commands.command()
     async def reset_user(self, ctx: Context, user: discord.User) -> None:
-        self.get_user_data(ctx.guild.id, user.id)  # Ensure the user exists
+        player_data: dict = self._get_user_data(ctx.guild.id, user.id)
+        player_data.update(level=1, experience=0, epoch=0)
 
         self.db.session.update(
-            models.RankSystem(level=1, experience=0, epoch=0),
+            models.RankSystem(**player_data),
             where={"guild_id": ctx.guild.id, "user_id": user.id}
         )
         await ctx.reply(f"{user.mention}'s stats have been reset.")
