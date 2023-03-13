@@ -8,9 +8,8 @@ import typing
 
 import discord
 import discord.ext.commands
-import psycopg2
 
-from . import pysql
+from .models import Prefixes, db
 
 if typing.TYPE_CHECKING:
     from logging import Logger
@@ -18,7 +17,7 @@ if typing.TYPE_CHECKING:
 
     from discord import ActivityType, Message
 
-    from .pysql import Column, Database, Model
+    from .pysql import Database
 
 # Relative to `../launcher.py`
 RELATIVE_COGS_DIR_PATH: str = "./nicbot/cogs"
@@ -48,24 +47,7 @@ class NicBot(discord.ext.commands.Bot):
             intents=discord.Intents.all()
         )
         self.log: Logger = logging.getLogger(__name__)
-
-        dsn: str = pysql.DatabaseURI(**self.config["database"]).uri
-        self.db: Database = pysql.Database(psycopg2.connect, None, dsn=dsn)
-
-        class Prefixes(self.db.Model, name="prefixes"):
-            guild_id: Column = pysql.Column(
-                pysql.Int8,
-                not_null=True,
-                unique=True
-            )
-            prefix: Column = pysql.Column(
-                pysql.Text,
-                not_null=True,
-                default=self.default_prefix
-            )
-
-        Prefixes().create()
-        self.prefixes: Model = Prefixes
+        self.db: Database = db
 
         return None
 
@@ -133,14 +115,14 @@ class NicBot(discord.ext.commands.Bot):
         if bool(prefix):
             return prefix_base + list(prefix)
 
-        Prefixes: Model = bot.prefixes
-        entry = Prefixes(guild_id=guild_id)
-
-        prefix = bot.db.query.fetch_one(entry, select=["prefix"])[0]
+        entry: Prefixes = Prefixes(guild_id=guild_id)
+        prefix: str = bot.db.query.fetch_one(entry, select=["prefix"])
 
         if not bool(prefix):
             bot.db.session.insert(entry)
             prefix = bot.default_prefix
+        else:
+            prefix = prefix[0]
 
         prefix_cache[guild_id] = prefix
 

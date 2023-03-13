@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-# `filter` is a keyword argument for some methods in :class:`Session`.
-from builtins import filter as __filter__
 from typing import TYPE_CHECKING
 
 from .model import Model
@@ -42,7 +40,7 @@ class Session:
         self,
         __t: Union[Table, Model],
         /,
-        filter: Dict[str, Any] = {}
+        where: Dict[str, Any] = {}
     ) -> None:
         model: Model = __t if isinstance(__t, Model) else __t.to_model()
         table_name: str = model.table.name
@@ -56,12 +54,12 @@ class Session:
 
         sql: str = f'UPDATE {table_name} SET {updates}'
 
-        if (bool(filter)):
-            base_filter: str = "WHERE "
-            for (name, value) in filter.items():
-                base_filter += f"{name} = {placeholder} AND "
+        if (bool(where)):
+            base_where: str = "WHERE "
+            for (name, value) in where.items():
+                base_where += f"{name} = {placeholder} AND "
                 values.append(value)
-            sql += " " + base_filter.strip("AND ")
+            sql += " " + base_where.strip("AND ")
 
         return self.db._execute(Statement(sql, tuple(values)))
 
@@ -73,11 +71,11 @@ class Session:
         sql: str = f'DELETE FROM {table_name}'
         values: List[Any] = []
 
-        if (filter := model.kwargs):
-            base_filter: str = "WHERE "
-            for (name, value) in filter.items():
-                base_filter += f"{name} = {placeholder} AND "
+        if (where := model.kwargs):
+            base_where: str = "WHERE "
+            for (name, value) in where.items():
+                base_where += f"{name} = {placeholder} AND "
                 values.append(value)
-            sql += " " + base_filter.strip("AND ")
+            sql += " " + base_where.strip("AND ")
 
         return self.db._execute(Statement(sql, tuple(values)))
