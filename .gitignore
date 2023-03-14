@@ -1,5 +1,7 @@
-__pychache__/*
+__pycache__/*
+_*
 !__init__.py
 !__main__.py
-_*
 config.json
+*.log
+.vscode/*

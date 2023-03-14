@@ -13,12 +13,11 @@
     },
     "database": {
         "engine": "postgres",
-        "username": "postgres",
+        "user": "postgres",
         "password": "secret",
         "host": "127.0.0.1",
         "port": 5432,
         "database": "postgres",
-        "sslmode": "prefer",
-        "timeout": 10.0
+        "sslmode": "prefer"
     }
 }
