@@ -121,7 +121,7 @@ class RankSystem(discord.ext.commands.Cog):
         )
 
         return None
-    
+
     @discord.ext.commands.command()
     async def reset_user(self, ctx: Context, user: discord.User) -> None:
         player_data: dict = self._get_user_data(ctx.guild.id, user.id)

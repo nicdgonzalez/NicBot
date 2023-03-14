@@ -33,7 +33,7 @@ class RankSystem(db.Model, name="rank_system"):
 class RankRoles(db.Model, name="rank_roles"):
     guild_id: Column = pysql.Column(
         pysql.Int8,
-        foreign_key=pysql.ForeignKey(RankSystem.guild_id)
+        reference=pysql.ForeignKey(RankSystem.guild_id)
     )
     rank_1_role: Column = pysql.Column(pysql.Int8)
     rank_1_level: Column = pysql.Column(pysql.Int8)
